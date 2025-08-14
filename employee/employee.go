@@ -19,22 +19,18 @@ type Employee struct {
 	Manager   string `json:"manager"`
 }
 
-// CreateEmployee erstellt einen neuen Mitarbeiter über die API
 func CreateEmployee(employee Employee) (*Employee, error) {
-	// Erstelle die POST-Daten
 	data, err := json.Marshal(employee)
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling employee data: %v", err)
 	}
 
-	// Sende die POST-Anfrage
 	resp, err := http.Post("http://localhost:8080/employees", "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		return nil, fmt.Errorf("error creating employee: %v", err)
 	}
 	defer resp.Body.Close()
 
-	// Überprüfe, ob der Status OK ist (ändere dies auf 200 OK)
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return nil, fmt.Errorf("failed to create employee, server responded with status: %s", resp.Status)
 	}
@@ -82,7 +78,6 @@ func DeleteEmployee(employeeID int) error {
 	}
 	defer resp.Body.Close()
 
-	// Überprüfe, ob der Server eine erfolgreiche Antwort gibt
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to delete employee, server responded with status: %s", resp.Status)
 	}

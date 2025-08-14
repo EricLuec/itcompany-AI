@@ -43,7 +43,7 @@ func main() {
 		}
 
 		if err == nil {
-			err := logger.CreateLogEntry(logCategory, actionDesc, 0)
+			err := logger.CreateLogEntry(logCategory, actionDesc)
 			if err != nil {
 				log.Printf("Error creating log entry: %v", err)
 			}
