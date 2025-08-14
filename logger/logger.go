@@ -10,13 +10,15 @@ import (
 )
 
 type LogEntry struct {
+	ID          int       `json:"id"`
 	Category    string    `json:"category"`
 	Description string    `json:"description"`
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func CreateLogEntry(category, description string) error {
+func CreateLogEntry(category, description string, id int) error {
 	logEntry := LogEntry{
+		ID:          id,
 		Category:    category,
 		Description: description,
 		Timestamp:   time.Now(),
