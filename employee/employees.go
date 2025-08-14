@@ -83,30 +83,23 @@ func GenerateEmployee() (*Employee, error) {
 
 func PostEmployee(employee *Employee) error {
 	url := "http://localhost:8080/employees"
-
 	jsonData, err := json.Marshal(employee)
 	if err != nil {
 		return err
 	}
-
 	fmt.Printf("Sending request with body: %s\n", string(jsonData))
-
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
-
 	fmt.Println("Server response body:", string(body))
-
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to post employee: %s, response body: %s", resp.Status, string(body))
 	}
-
 	return nil
 }
