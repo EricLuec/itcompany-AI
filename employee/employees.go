@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"itCompany-AI/logger"
 	"log"
 	"math/rand"
 	"net/http"
@@ -151,4 +152,49 @@ func DeleteEmployee(id int) error {
 	body, _ := io.ReadAll(resp.Body)
 	return fmt.Errorf("failed to delete employee with ID %d: %d , response body: %s",
 		id, resp.StatusCode, string(body))
+}
+
+func ExecuteRandomEmployeeFunc() {
+	action := rand.Intn(2)
+	if action == 0 {
+		employee, err := GenerateEmployee()
+		if err != nil {
+			log.Printf("Error generating employee: %v", err)
+			return
+		}
+
+		err = PostEmployee(employee)
+		if err != nil {
+			log.Printf("Error posting employee: %v", err)
+			_ = logger.CreateLogEntry("employee", fmt.Sprintf("Error posting employee: %v", err))
+		} else {
+			msg := fmt.Sprintf("Successfully posted employee: %s %s", employee.FirstName, employee.LastName)
+			fmt.Println(msg)
+			_ = logger.CreateLogEntry("employee", msg)
+		}
+
+	} else {
+		ids, err := GetAllEmployeeIDs()
+		if err != nil {
+			log.Printf("Error retrieving employee IDs: %v", err)
+			_ = logger.CreateLogEntry("employee", fmt.Sprintf("Error retrieving employee IDs: %v", err))
+			return
+		}
+
+		if len(ids) > 0 {
+			id := ids[rand.Intn(len(ids))]
+			err := DeleteEmployee(id)
+			if err != nil {
+				log.Printf("Error deleting employee with ID %d: %v", id, err)
+				_ = logger.CreateLogEntry("employee", fmt.Sprintf("Error deleting employee with ID %d: %v", id, err))
+			} else {
+				msg := fmt.Sprintf("Successfully deleted employee with ID %d", id)
+				fmt.Println(msg)
+				_ = logger.CreateLogEntry("employee", msg)
+			}
+		} else {
+			log.Println("No employees available to delete.")
+			_ = logger.CreateLogEntry("employee", "No employees available to delete.")
+		}
+	}
 }
