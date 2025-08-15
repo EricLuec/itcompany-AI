@@ -20,4 +20,10 @@ func main() {
 
 		time.Sleep(time.Duration(rand.Intn(6)+5) * time.Second)
 	}
+
+	/*
+		antwort := logger.OllamaRequester("hallo")
+		fmt.Println(antwort)
+
+	*/
 }
