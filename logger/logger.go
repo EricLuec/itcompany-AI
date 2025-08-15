@@ -10,36 +10,33 @@ import (
 )
 
 type LogEntry struct {
-	ID          int       `json:"id"`
-	Category    string    `json:"category"`
-	Description string    `json:"description"`
-	Timestamp   time.Time `json:"timestamp"`
+	Category    string `json:"category"`
+	Description string `json:"description"`
+	Timestamp   string `json:"timestamp"`
 }
 
-func CreateLogEntry(category, description string, id int) error {
+func CreateLogEntry(category, description string) error {
 	logEntry := LogEntry{
-		ID:          id,
 		Category:    category,
 		Description: description,
-		Timestamp:   time.Now(),
+		Timestamp:   time.Now().Format("2006-01-02T15:04:05"),
 	}
 
-	logEntryJSON, err := json.Marshal(logEntry)
+	logData, err := json.Marshal(logEntry)
 	if err != nil {
-		return fmt.Errorf("error marshalling log entry: %v", err)
+		return fmt.Errorf("error marshaling log entry: %v", err)
 	}
 
-	url := "http://localhost:8080/logEntry"
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(logEntryJSON))
+	resp, err := http.Post("http://localhost:8080/logEntry", "application/json", bytes.NewBuffer(logData))
 	if err != nil {
 		return fmt.Errorf("error posting log entry: %v", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to log entry, server responded with status: %s", resp.Status)
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("server responded with: %s", resp.Status)
 	}
 
-	log.Printf("Log entry created for category %s: %s", category, description)
+	log.Println("Log entry posted successfully.")
 	return nil
 }

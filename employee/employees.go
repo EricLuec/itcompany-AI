@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
 	"time"
@@ -41,20 +43,19 @@ func getRandomUser() (string, string, error) {
 		return "", "", err
 	}
 
-	var data RandomUserResponse
-	err = json.Unmarshal(body, &data)
+	var userResponse RandomUserResponse
+	err = json.Unmarshal(body, &userResponse)
 	if err != nil {
 		return "", "", err
 	}
 
-	firstName := data.Results[0].Name.First
-	lastName := data.Results[0].Name.Last
+	if len(userResponse.Results) > 0 {
+		firstName := userResponse.Results[0].Name.First
+		lastName := userResponse.Results[0].Name.Last
+		return firstName, lastName, nil
+	}
 
-	return firstName, lastName, nil
-}
-
-func generateRandomSalary() int {
-	return rand.Intn(1501) + 500
+	return "", "", fmt.Errorf("no user data available")
 }
 
 func GenerateEmployee() (*Employee, error) {
@@ -65,7 +66,7 @@ func GenerateEmployee() (*Employee, error) {
 
 	hireDate := time.Now().Format("2006-01-02")
 
-	salary := generateRandomSalary()
+	salary := rand.Intn(1500) + 500
 
 	email := fmt.Sprintf("%s.%s@gmail.com", firstName, lastName)
 
@@ -83,23 +84,71 @@ func GenerateEmployee() (*Employee, error) {
 
 func PostEmployee(employee *Employee) error {
 	url := "http://localhost:8080/employees"
-	jsonData, err := json.Marshal(employee)
+
+	employeeJSON, err := json.Marshal(employee)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Sending request with body: %s\n", string(jsonData))
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(employeeJSON))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Server response body:", string(body))
+
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to post employee: %s, response body: %s", resp.Status, string(body))
 	}
+
+	log.Println("Employee posted successfully")
 	return nil
+}
+
+func GetAllEmployeeIDs() ([]int, error) {
+	url := "http://localhost:8080/employees/allIds"
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var ids []int // IDs als int speichern
+	err = json.Unmarshal(body, &ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
+
+func DeleteEmployee(id int) error {
+	url := fmt.Sprintf("http://localhost:8080/employees/%d", id)
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNoContent {
+		return nil
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	return fmt.Errorf("failed to delete employee with ID %d: %d , response body: %s",
+		id, resp.StatusCode, string(body))
 }
