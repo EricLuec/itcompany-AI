@@ -123,7 +123,7 @@ func GetAllEmployeeIDs() ([]int, error) {
 		return nil, err
 	}
 
-	var ids []int // IDs als int speichern
+	var ids []int
 	err = json.Unmarshal(body, &ids)
 	if err != nil {
 		return nil, err
