@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"itCompany-AI/building"
 	employees "itCompany-AI/employee"
 	"math/rand"
 	"time"
@@ -15,7 +15,7 @@ func main() {
 		if action == 0 {
 			employees.ExecuteRandomEmployeeFunc()
 		} else {
-			fmt.Println("no work")
+			building.ExecuteRandomBuildingFunc()
 		}
 
 		time.Sleep(time.Duration(rand.Intn(6)+5) * time.Second)
