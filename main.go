@@ -3,6 +3,7 @@ package main
 import (
 	"itCompany-AI/building"
 	employees "itCompany-AI/employee"
+	"itCompany-AI/sector"
 	"math/rand"
 	"time"
 )
@@ -11,11 +12,13 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	for {
-		action := rand.Intn(2)
+		action := rand.Intn(3)
 		if action == 0 {
 			employees.ExecuteRandomEmployeeFunc()
-		} else {
+		} else if action == 1 {
 			building.ExecuteRandomBuildingFunc()
+		} else if action == 2 {
+			sector.ExecuteRandomSectorFunc()
 		}
 
 		time.Sleep(time.Duration(rand.Intn(6)+5) * time.Second)
