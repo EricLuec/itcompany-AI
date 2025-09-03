@@ -30,3 +30,5 @@ func main() {
 
 	*/
 }
+
+// ollama run gemma2:2b

@@ -67,7 +67,7 @@ func GenerateEmployee() (*Employee, error) {
 
 	hireDate := time.Now().Format("2006-01-02")
 
-	salary := rand.Intn(1500) + 500
+	salary := rand.Intn(15000) + 500
 
 	email := fmt.Sprintf("%s.%s@gmail.com", firstName, lastName)
 
