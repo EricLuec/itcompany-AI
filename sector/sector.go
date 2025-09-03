@@ -19,7 +19,7 @@ type Sector struct {
 }
 
 func getRandomSector() string {
-	randomSectorName := logger.OllamaRequester("gib mir einen sektor den ein itunternehmen abdecket. nur 1 wort")
+	randomSectorName := logger.OllamaRequester("gib mir einen sektor der in einem informatiklastigen Unternehmen existiert. nur 1 wort")
 	fmt.Println(randomSectorName)
 	return randomSectorName
 }
@@ -107,6 +107,31 @@ func DeleteSector(id int) error {
 	body, _ := io.ReadAll(resp.Body)
 	return fmt.Errorf("failed to delete Sector with ID %d: %d , response body: %s",
 		id, resp.StatusCode, string(body))
+}
+
+func GetOneSector() {
+	resp, err := http.Get("http://localhost:8080/sectors")
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var sectors []map[string]interface{}
+	if err := json.Unmarshal(body, &sectors); err != nil {
+		panic(err)
+	}
+
+	if len(sectors) == 0 {
+		panic("no sectors found")
+	}
+
+	out, _ := json.MarshalIndent(sectors[0], "", "  ")
+	fmt.Println(string(out))
 }
 
 func ExecuteRandomSectorFunc() {
