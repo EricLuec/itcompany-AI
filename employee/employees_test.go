@@ -7,20 +7,32 @@ import (
 	"testing"
 )
 
-func TestGenerateEmployee(t *testing.T) {
-	origSector := getSector
-	getSector = func() (map[string]interface{}, error) {
-		return map[string]interface{}{
-			"name":        "Engineering",
-			"description": "Building cool stuff",
-			"salaryClass": "A",
-		}, nil
-	}
-	defer func() { getSector = origSector }()
+// Hilfsfunktionen für Mocking
+func mockGetRandomUser() (string, string, error) {
+	return "John", "Doe", nil
+}
 
-	origRandom := getRandomUserFunc
-	getRandomUserFunc = func() (string, string, error) { return "John", "Doe", nil }
-	defer func() { getRandomUserFunc = origRandom }()
+func mockGetOneSector() (*Sector, error) {
+	return &Sector{
+		ID:          1,
+		Name:        "Engineering",
+		Description: "Building cool stuff",
+		SalaryClass: "A",
+	}, nil
+}
+
+func TestGenerateEmployee(t *testing.T) {
+	// Temporär die echten Funktionen überschreiben
+	origRandomUser := getRandomUser
+	origGetSector := GetOneSector
+
+	getRandomUser = mockGetRandomUser
+	GetOneSector = func() (*Sector, error) { return mockGetOneSector() }
+
+	defer func() {
+		getRandomUser = origRandomUser
+		GetOneSector = origGetSector
+	}()
 
 	emp, err := GenerateEmployee()
 	if err != nil {
@@ -28,6 +40,9 @@ func TestGenerateEmployee(t *testing.T) {
 	}
 	if emp.FirstName != "John" || emp.LastName != "Doe" {
 		t.Errorf("unexpected name: %s %s", emp.FirstName, emp.LastName)
+	}
+	if emp.Sector.Name != "Engineering" {
+		t.Errorf("unexpected sector name: %s", emp.Sector.Name)
 	}
 }
 
@@ -41,12 +56,26 @@ func TestPostEmployee(t *testing.T) {
 	}))
 	defer server.Close()
 
-	orig := employeeAPI
+	// Temporär die URL anpassen
+	origURL := employeeAPI
 	employeeAPI = server.URL
-	defer func() { employeeAPI = orig }()
+	defer func() { employeeAPI = origURL }()
 
-	err := PostEmployee(&Employee{FirstName: "Alice", LastName: "Smith"})
-	if err != nil {
+	emp := &Employee{
+		FirstName: "Alice",
+		LastName:  "Smith",
+		Email:     "alice@example.com",
+		HireDate:  "2025-09-03",
+		Salary:    1000,
+		Sector: Sector{
+			ID:          1,
+			Name:        "IT",
+			Description: "",
+			SalaryClass: "A",
+		},
+	}
+
+	if err := PostEmployee(emp); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -57,9 +86,9 @@ func TestGetAllEmployeeIDs(t *testing.T) {
 	}))
 	defer server.Close()
 
-	orig := employeeAllIDsAPI
+	origURL := employeeAllIDsAPI
 	employeeAllIDsAPI = server.URL
-	defer func() { employeeAllIDsAPI = orig }()
+	defer func() { employeeAllIDsAPI = origURL }()
 
 	ids, err := GetAllEmployeeIDs()
 	if err != nil {
@@ -76,9 +105,9 @@ func TestDeleteEmployee(t *testing.T) {
 	}))
 	defer server.Close()
 
-	orig := employeeAPI
+	origURL := employeeAPI
 	employeeAPI = server.URL
-	defer func() { employeeAPI = orig }()
+	defer func() { employeeAPI = origURL }()
 
 	if err := DeleteEmployee(42); err != nil {
 		t.Fatalf("unexpected error: %v", err)
