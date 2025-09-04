@@ -49,74 +49,55 @@ func GenerateBuilding() (*Building, error) {
 }
 
 func PostBuilding(building *Building) error {
-	url := "http://localhost:8080/buildings"
-
-	employeeJSON, err := json.Marshal(building)
+	data, err := json.Marshal(building)
 	if err != nil {
 		return err
 	}
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(employeeJSON))
+	resp, err := http.Post(buildingAPI, "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
+	body, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to post Building: %s, response body: %s", resp.Status, string(body))
+		return fmt.Errorf("failed to post Building: %s, body: %s", resp.Status, string(body))
 	}
-
-	log.Println("Building posted successfully")
 	return nil
 }
 
 func GetAllBuildingIds() ([]int, error) {
-	url := "http://localhost:8080/buildings/allIds"
-	resp, err := http.Get(url)
+	resp, err := http.Get(buildingAllIDsAPI)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
 	var ids []int
-	err = json.Unmarshal(body, &ids)
-	if err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&ids); err != nil {
 		return nil, err
 	}
-
 	return ids, nil
 }
 
 func DeleteBuilding(id int) error {
-	url := fmt.Sprintf("http://localhost:8080/buildings/%d", id)
-	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%d", buildingAPI, id), nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return err
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
+		return err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNoContent {
-		return nil
+	if resp.StatusCode != http.StatusNoContent {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to delete building: %s, body: %s", resp.Status, string(body))
 	}
-
-	body, _ := io.ReadAll(resp.Body)
-	return fmt.Errorf("failed to delete building with ID %d: %d , response body: %s",
-		id, resp.StatusCode, string(body))
+	return nil
 }
 
 func ExecuteRandomBuildingFunc() {
