@@ -51,6 +51,9 @@ func TestGetAllSectorIds(t *testing.T) {
 
 func TestDeleteSector(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("expected DELETE, got %s", r.Method)
+		}
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	defer server.Close()

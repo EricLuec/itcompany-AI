@@ -1,6 +1,7 @@
 package building
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -24,7 +25,13 @@ func TestPostBuilding(t *testing.T) {
 	buildingAPI = server.URL
 	defer func() { buildingAPI = origURL }()
 
-	b := &Building{Name: "SkyTower", Description: "", BuildingDate: "2025-09-03", Capacity: 1000, City: "Berlin, Germany"}
+	b := &Building{
+		Name:         "SkyTower",
+		Description:  "",
+		BuildingDate: "2025-09-03",
+		Capacity:     1000,
+		City:         "Berlin, Germany",
+	}
 	if err := PostBuilding(b); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -51,6 +58,9 @@ func TestGetAllBuildingIds(t *testing.T) {
 
 func TestDeleteBuilding(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("expected DELETE request, got %s", r.Method)
+		}
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	defer server.Close()
