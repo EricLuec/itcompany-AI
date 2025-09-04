@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"itCompany-AI/logger"
+	"log"
+	"math/rand"
 	"net/http"
 )
 
@@ -52,7 +53,7 @@ func PostSector(sector *Sector) error {
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to post Sector: %s, body: %s", resp.Status, string(body))
 	}
@@ -106,4 +107,49 @@ func GetOneSector() (*Sector, error) {
 		return nil, fmt.Errorf("no sectors found")
 	}
 	return &sectors[0], nil
+}
+
+func ExecuteRandomSectorFunc() {
+	action := rand.Intn(2)
+	if action == 0 {
+		sector, err := GenerateSector()
+		if err != nil {
+			log.Printf("Error generating Sector: %v", err)
+			return
+		}
+
+		err = PostSector(sector)
+		if err != nil {
+			log.Printf("Error posting Sector: %v", err)
+			_ = logger.CreateLogEntry("Sector", fmt.Sprintf("Error posting Sector: %v", err))
+		} else {
+			msg := fmt.Sprintf("Successfully posted Sector: %s %s", sector.Name, sector.SalaryClass)
+			fmt.Println(msg)
+			_ = logger.CreateLogEntry("Sector", msg)
+		}
+
+	} else {
+		ids, err := GetAllSectorIds()
+		if err != nil {
+			log.Printf("Error retrieving Sector IDs: %v", err)
+			_ = logger.CreateLogEntry("sector", fmt.Sprintf("Error retrieving Sector IDs: %v", err))
+			return
+		}
+
+		if len(ids) > 0 {
+			id := ids[rand.Intn(len(ids))]
+			err := DeleteSector(id)
+			if err != nil {
+				log.Printf("Error deleting Sector with ID %d: %v", id, err)
+				_ = logger.CreateLogEntry("Sector", fmt.Sprintf("Error deleting Sector with ID %d: %v", id, err))
+			} else {
+				msg := fmt.Sprintf("Successfully deleted Sector with ID %d", id)
+				fmt.Println(msg)
+				_ = logger.CreateLogEntry("Sector", msg)
+			}
+		} else {
+			log.Println("No Sector available to delete.")
+			_ = logger.CreateLogEntry("Sector", "No Sector available to delete.")
+		}
+	}
 }
