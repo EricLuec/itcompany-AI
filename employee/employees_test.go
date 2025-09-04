@@ -2,36 +2,26 @@ package employees
 
 import (
 	"encoding/json"
+	sector2 "itCompany-AI/sector"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-// Hilfsfunktionen für Mocking
-func mockGetRandomUser() (string, string, error) {
-	return "John", "Doe", nil
-}
-
-func mockGetOneSector() (*Sector, error) {
-	return &Sector{
-		ID:          1,
-		Name:        "Engineering",
-		Description: "Building cool stuff",
-		SalaryClass: "A",
-	}, nil
-}
-
 func TestGenerateEmployee(t *testing.T) {
-	// Temporär die echten Funktionen überschreiben
-	origRandomUser := getRandomUser
-	origGetSector := GetOneSector
-
-	getRandomUser = mockGetRandomUser
-	GetOneSector = func() (*Sector, error) { return mockGetOneSector() }
-
+	origRandom := getRandomUserFunc
+	origSector := getSectorFunc
+	getRandomUserFunc = func() (string, string, error) { return "John", "Doe", nil }
+	getSectorFunc = func() (*sector2.Sector, error) {
+		return &sector2.Sector{
+			Name:        "Engineering",
+			Description: "Building stuff",
+			SalaryClass: "A",
+		}, nil
+	}
 	defer func() {
-		getRandomUser = origRandomUser
-		GetOneSector = origGetSector
+		getRandomUserFunc = origRandom
+		getSectorFunc = origSector
 	}()
 
 	emp, err := GenerateEmployee()
@@ -56,7 +46,6 @@ func TestPostEmployee(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Temporär die URL anpassen
 	origURL := employeeAPI
 	employeeAPI = server.URL
 	defer func() { employeeAPI = origURL }()
@@ -67,8 +56,7 @@ func TestPostEmployee(t *testing.T) {
 		Email:     "alice@example.com",
 		HireDate:  "2025-09-03",
 		Salary:    1000,
-		Sector: Sector{
-			ID:          1,
+		Sector: sector2.Sector{
 			Name:        "IT",
 			Description: "",
 			SalaryClass: "A",

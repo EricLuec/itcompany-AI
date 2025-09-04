@@ -14,6 +14,14 @@ import (
 	"time"
 )
 
+var (
+	employeeAPI       = "http://localhost:8080/employees"
+	employeeAllIDsAPI = "http://localhost:8080/employees/allIds"
+
+	getRandomUserFunc = getRandomUser
+	getSectorFunc     = sector2.GetOneSector
+)
+
 type Sector struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
@@ -47,43 +55,34 @@ func getRandomUser() (string, string, error) {
 		return "", "", err
 	}
 	defer resp.Body.Close()
-
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", "", err
 	}
-
 	var userResponse RandomUserResponse
 	err = json.Unmarshal(body, &userResponse)
 	if err != nil {
 		return "", "", err
 	}
-
 	if len(userResponse.Results) > 0 {
-		firstName := userResponse.Results[0].Name.First
-		lastName := userResponse.Results[0].Name.Last
-		return firstName, lastName, nil
+		return userResponse.Results[0].Name.First, userResponse.Results[0].Name.Last, nil
 	}
-
 	return "", "", fmt.Errorf("no user data available")
 }
 
 func GenerateEmployee() (*Employee, error) {
-	firstName, lastName, err := getRandomUser()
+	firstName, lastName, err := getRandomUserFunc()
 	if err != nil {
 		return nil, err
 	}
-
 	hireDate := time.Now().Format("2006-01-02")
 	salary := rand.Intn(15000) + 500
 	email := fmt.Sprintf("%s.%s@gmail.com", firstName, lastName)
-
-	sector, err := sector2.GetOneSector()
+	sector, err := getSectorFunc()
 	if err != nil {
 		return nil, err
 	}
-
-	employee := &Employee{
+	return &Employee{
 		Email:     email,
 		FirstName: firstName,
 		LastName:  lastName,
@@ -91,99 +90,74 @@ func GenerateEmployee() (*Employee, error) {
 		Manager:   "",
 		Salary:    salary,
 		Sector:    *sector,
-	}
-	return employee, nil
+	}, nil
 }
-func PostEmployee(employee *Employee) error {
-	url := "http://localhost:8080/employees"
 
+func PostEmployee(employee *Employee) error {
 	employeeJSON, err := json.Marshal(employee)
 	if err != nil {
 		return err
 	}
-
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(employeeJSON))
+	resp, err := http.Post(employeeAPI, "application/json", bytes.NewBuffer(employeeJSON))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
+	body, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to post employee: %s, response body: %s", resp.Status, string(body))
 	}
-
 	log.Println("Employee posted successfully")
 	return nil
 }
 
 func GetAllEmployeeIDs() ([]int, error) {
-	url := "http://localhost:8080/employees/allIds"
-	resp, err := http.Get(url)
+	resp, err := http.Get(employeeAllIDsAPI)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
+	body, _ := ioutil.ReadAll(resp.Body)
 	var ids []int
-	err = json.Unmarshal(body, &ids)
-	if err != nil {
+	if err := json.Unmarshal(body, &ids); err != nil {
 		return nil, err
 	}
-
 	return ids, nil
 }
 
 func DeleteEmployee(id int) error {
-	url := fmt.Sprintf("http://localhost:8080/employees/%d", id)
+	url := fmt.Sprintf("%s/%d", employeeAPI, id)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return err
 	}
-
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
+		return err
 	}
 	defer resp.Body.Close()
-
 	if resp.StatusCode == http.StatusNoContent {
 		return nil
 	}
-
 	body, _ := io.ReadAll(resp.Body)
-	return fmt.Errorf("failed to delete employee with ID %d: %d , response body: %s",
-		id, resp.StatusCode, string(body))
+	return fmt.Errorf("failed to delete employee with ID %d: %d, response body: %s", id, resp.StatusCode, string(body))
 }
 
 func ExecuteRandomEmployeeFunc() {
-	action := rand.Intn(2)
-	if action == 0 {
-		employee, err := GenerateEmployee()
+	if rand.Intn(2) == 0 {
+		emp, err := GenerateEmployee()
 		if err != nil {
 			log.Printf("Error generating employee: %v", err)
 			return
 		}
-
-		err = PostEmployee(employee)
-		if err != nil {
+		if err := PostEmployee(emp); err != nil {
 			log.Printf("Error posting employee: %v", err)
 			_ = logger.CreateLogEntry("employee", fmt.Sprintf("Error posting employee: %v", err))
 		} else {
-			msg := fmt.Sprintf("Successfully posted employee: %s %s", employee.FirstName, employee.LastName)
+			msg := fmt.Sprintf("Successfully posted employee: %s %s", emp.FirstName, emp.LastName)
 			fmt.Println(msg)
 			_ = logger.CreateLogEntry("employee", msg)
 		}
-
 	} else {
 		ids, err := GetAllEmployeeIDs()
 		if err != nil {
@@ -191,11 +165,9 @@ func ExecuteRandomEmployeeFunc() {
 			_ = logger.CreateLogEntry("employee", fmt.Sprintf("Error retrieving employee IDs: %v", err))
 			return
 		}
-
 		if len(ids) > 0 {
 			id := ids[rand.Intn(len(ids))]
-			err := DeleteEmployee(id)
-			if err != nil {
+			if err := DeleteEmployee(id); err != nil {
 				log.Printf("Error deleting employee with ID %d: %v", id, err)
 				_ = logger.CreateLogEntry("employee", fmt.Sprintf("Error deleting employee with ID %d: %v", id, err))
 			} else {
