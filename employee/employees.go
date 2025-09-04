@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"itCompany-AI/logger"
+	sector2 "itCompany-AI/sector"
 	"log"
 	"math/rand"
 	"net/http"
@@ -14,12 +15,13 @@ import (
 )
 
 type Employee struct {
-	Email     string `json:"email"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	HireDate  string `json:"hireDate"`
-	Manager   string `json:"manager"`
-	Salary    int    `json:"salary"`
+	Email     string         `json:"email"`
+	FirstName string         `json:"firstName"`
+	LastName  string         `json:"lastName"`
+	HireDate  string         `json:"hireDate"`
+	Manager   string         `json:"manager"`
+	Salary    int            `json:"salary"`
+	Sector    sector2.Sector `json:"sector"`
 }
 
 type RandomUserResponse struct {
@@ -71,6 +73,17 @@ func GenerateEmployee() (*Employee, error) {
 
 	email := fmt.Sprintf("%s.%s@gmail.com", firstName, lastName)
 
+	sectorMap, err := sector2.GetOneSector()
+	if err != nil {
+		return nil, err
+	}
+
+	sector := sector2.Sector{
+		Name:        sectorMap["name"].(string),
+		Description: sectorMap["description"].(string),
+		SalaryClass: sectorMap["salaryClass"].(string),
+	}
+
 	employee := &Employee{
 		Email:     email,
 		FirstName: firstName,
@@ -78,6 +91,7 @@ func GenerateEmployee() (*Employee, error) {
 		HireDate:  hireDate,
 		Manager:   "",
 		Salary:    salary,
+		Sector:    sector,
 	}
 
 	return employee, nil

@@ -109,29 +109,28 @@ func DeleteSector(id int) error {
 		id, resp.StatusCode, string(body))
 }
 
-func GetOneSector() {
+func GetOneSector() (map[string]interface{}, error) {
 	resp, err := http.Get("http://localhost:8080/sectors")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	var sectors []map[string]interface{}
 	if err := json.Unmarshal(body, &sectors); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	if len(sectors) == 0 {
-		panic("no sectors found")
+		return nil, fmt.Errorf("no sectors found")
 	}
 
-	out, _ := json.MarshalIndent(sectors[0], "", "  ")
-	fmt.Println(string(out))
+	return sectors[0], nil
 }
 
 func ExecuteRandomSectorFunc() {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"itCompany-AI/sector"
+	employees "itCompany-AI/employee"
 	"math/rand"
 	"time"
 )
@@ -30,7 +30,11 @@ func main() {
 		fmt.Println(antwort)
 
 	*/
-	sector.GetOneSector()
+	for {
+		employees.ExecuteRandomEmployeeFunc()
+		time.Sleep(time.Duration(rand.Intn(6)+5) * time.Second)
+
+	}
 }
 
 // ollama run gemma2:2b
