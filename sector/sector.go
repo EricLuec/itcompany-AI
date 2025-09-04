@@ -12,6 +12,9 @@ import (
 	"net/http"
 )
 
+var sectorAPI = "http://localhost:8080/sectors"
+var sectorAllIDsAPI = "http://localhost:8080/sectors/allIds"
+
 type Sector struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`

@@ -22,11 +22,18 @@ jobs:
       - name: Download dependencies
         run: go mod tidy
 
-      - name: Run tests
-        run: go test ./... -v -race -coverprofile=coverage.out
+      - name: Run tests with verbose output and coverage
+        run: |
+          mkdir -p coverage
+          go test ./... -v -race -coverprofile=coverage/coverage.out -covermode=atomic
+          go tool cover -func=coverage/coverage.out | tee coverage/coverage.txt
+          go tool cover -html=coverage/coverage.out -o coverage/coverage.html
 
-      - name: Upload coverage
+      - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: coverage.out
+          path: coverage/
+
+      - name: Print coverage summary
+        run: cat coverage/coverage.txt

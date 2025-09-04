@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var logAPI = "http://localhost:8080/logEntry"
+
 type LogEntry struct {
 	Category    string `json:"category"`
 	Description string `json:"description"`
@@ -27,7 +29,7 @@ func CreateLogEntry(category, description string) error {
 		return fmt.Errorf("error marshaling log entry: %v", err)
 	}
 
-	resp, err := http.Post("http://localhost:8080/logEntry", "application/json", bytes.NewBuffer(logData))
+	resp, err := http.Post(logAPI, "application/json", bytes.NewBuffer(logData))
 	if err != nil {
 		return fmt.Errorf("error posting log entry: %v", err)
 	}

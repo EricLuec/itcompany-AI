@@ -13,6 +13,9 @@ import (
 	"time"
 )
 
+var buildingAPI = "http://localhost:8080/buildings"
+var buildingAllIDsAPI = "http://localhost:8080/buildings/allIds"
+
 type Building struct {
 	Name         string `json:"name"`
 	Description  string `json:"description"`
