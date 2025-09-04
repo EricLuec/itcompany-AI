@@ -36,9 +36,9 @@ func TestGetAllSectorIds(t *testing.T) {
 	}))
 	defer server.Close()
 
-	origURL := sectorAllIDsAPI
-	sectorAllIDsAPI = server.URL
-	defer func() { sectorAllIDsAPI = origURL }()
+	origURL := sectorAPI
+	sectorAPI = server.URL
+	defer func() { sectorAPI = origURL }()
 
 	ids, err := GetAllSectorIds()
 	if err != nil {
