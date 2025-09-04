@@ -14,6 +14,13 @@ import (
 	"time"
 )
 
+type Sector struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	SalaryClass string `json:"salaryClass"`
+}
+
 type Employee struct {
 	Email     string         `json:"email"`
 	FirstName string         `json:"firstName"`
@@ -68,20 +75,12 @@ func GenerateEmployee() (*Employee, error) {
 	}
 
 	hireDate := time.Now().Format("2006-01-02")
-
 	salary := rand.Intn(15000) + 500
-
 	email := fmt.Sprintf("%s.%s@gmail.com", firstName, lastName)
 
-	sectorMap, err := sector2.GetOneSector()
+	sector, err := sector2.GetOneSector()
 	if err != nil {
 		return nil, err
-	}
-
-	sector := sector2.Sector{
-		Name:        sectorMap["name"].(string),
-		Description: sectorMap["description"].(string),
-		SalaryClass: sectorMap["salaryClass"].(string),
 	}
 
 	employee := &Employee{
@@ -91,12 +90,10 @@ func GenerateEmployee() (*Employee, error) {
 		HireDate:  hireDate,
 		Manager:   "",
 		Salary:    salary,
-		Sector:    sector,
+		Sector:    *sector,
 	}
-
 	return employee, nil
 }
-
 func PostEmployee(employee *Employee) error {
 	url := "http://localhost:8080/employees"
 

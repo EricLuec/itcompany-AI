@@ -13,6 +13,7 @@ import (
 )
 
 type Sector struct {
+	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	SalaryClass string `json:"salaryClass"`
@@ -109,7 +110,7 @@ func DeleteSector(id int) error {
 		id, resp.StatusCode, string(body))
 }
 
-func GetOneSector() (map[string]interface{}, error) {
+func GetOneSector() (*Sector, error) {
 	resp, err := http.Get("http://localhost:8080/sectors")
 	if err != nil {
 		return nil, err
@@ -121,7 +122,7 @@ func GetOneSector() (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	var sectors []map[string]interface{}
+	var sectors []Sector
 	if err := json.Unmarshal(body, &sectors); err != nil {
 		return nil, err
 	}
@@ -130,7 +131,7 @@ func GetOneSector() (map[string]interface{}, error) {
 		return nil, fmt.Errorf("no sectors found")
 	}
 
-	return sectors[0], nil
+	return &sectors[0], nil
 }
 
 func ExecuteRandomSectorFunc() {
